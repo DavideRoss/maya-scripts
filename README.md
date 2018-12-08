@@ -29,6 +29,9 @@ There are no consistency controls on name and joint parenting on transformation.
 ### Changelog
 - **Version 1.0.0**
     - Initial commit
+- **Version 1.0.1**
+    - Added possibility to create control to fingers with any number of phalanx, just add definitions on `FINGER_DEFS` variable
+    - Added `WRIST_CTRL_SCALE` and `FINGER_CTRL_SCALE` to adjust controls scale
 
 ---
 
@@ -66,3 +69,34 @@ Not a single one, if any check will fail (no object selected or selected object 
 ### Changelog
 - **Version 1.0.0**
     - Initial commit
+- **Version 1.0.1**
+    - Added `CTRL_SCALE` parameter to control the scale of control
+
+---
+
+## connect-rotation
+### Description
+Connect `rotate` attribute of the first selected object to the second one.
+
+### Instruction
+- Select the source of the rotation
+- Select the destination
+- Run script
+
+### Caveats
+It checks only for selection length, it ignores any check on `rotate` attribute existance.
+
+---
+
+## create-ikfk-switch
+### Description
+Automatically create a BlendColor node and connect to IK, FK and skin skeleton to create an IK/FK switch
+
+### Instructions
+- Select IK joint
+- Select FK joint
+- Select skin joint
+- Run script
+
+### Caveats
+It will check only for selection length, any object will work (with unexpected results of course). The selection order is mandatory.

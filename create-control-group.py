@@ -5,7 +5,8 @@
 
 import maya.cmds as cmds
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
+CTRL_SCALE = .5
 
 selection = cmds.ls(sl=True)
 
@@ -18,6 +19,8 @@ if len(selection) > 0:
         ctrl = cmds.circle(nr=(1, 0, 0), c=(0, 0, 0), n='{}_CTRL'.format(ctrl_name))
         ctrl_grp = cmds.group(ctrl, n='{}_CTRL_GRP'.format(ctrl_name))
         cmds.matchTransform(ctrl_grp, sel_obj)
+        cmds.scale(CTRL_SCALE, CTRL_SCALE, CTRL_SCALE, '{}_CTRL'.format(ctrl_name))
+        cmds.makeIdentity('{}_CTRL'.format(ctrl_name), apply=True)
     else:
         cmds.inViewMessage(amg='Selected object is not a joint', pos='topLeft', fade=True)
 else:

@@ -6,13 +6,22 @@
 import maya.cmds as cmds
 import re
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 COLOR_ORANGE = (1, .5, 0)
 COLOR_YELLOW = (1, 1, 0)
 
 FINGER_MAIN_AXIS = 'Z'
-FINGER_DEF = ['Base', 'Mid', 'Tip']
+WRIST_CTRL_SCALE = .5
+FINGER_CTRL_SCALE = .2
+
+FINGER_DEFS = {
+    1: ['Tip'],
+    2: ['Base', 'Tip'],
+    3: ['Base', 'Mid', 'Tip'],
+    4: ['Base', 'Phalanx 1', 'Phalanx 2', 'Tip']
+}
+
 PLUS_SEQ = ['x', 'y', 'z']
 
 # =================================================================================================
@@ -38,9 +47,9 @@ def get_base_name(obj):
 def connect_rotation(ctrl, jnt):
     cmds.connectAttr('{}.rotate'.format(ctrl), '{}.rotate'.format(jnt))
 
-def unpack_finger(name):
-    (side, name, index) = re.search(r'([LR]_)?(\w+)_(\d)', name).groups()
-    return (name, FINGER_DEF[int(index)], side)
+def unpack_finger(name, f_len):
+    (side, name, index) = re.search(r'([LR])?_?(\w+)_(\d)', name).groups()
+    return (name, FINGER_DEFS[f_len][int(index)], side)
 
 def add_separator_attr(obj, name):
     new_attr = cmds.addAttr(obj, ln=name, k=True)
@@ -59,7 +68,7 @@ wrist_ctrl = wrist_jnt.replace('_JNT', '_CTRL')
 wrist_ctrl_grp = wrist_ctrl + '_GRP'
 
 if not cmds.objExists(wrist_ctrl):
-    create_control(wrist_jnt, color=COLOR_YELLOW)
+    create_control(wrist_jnt, color=COLOR_YELLOW, scale=WRIST_CTRL_SCALE)
     connect_rotation(wrist_ctrl, wrist_jnt)
 
 add_separator_attr(wrist_ctrl, 'MASTER')
@@ -67,8 +76,9 @@ cmds.addAttr(wrist_ctrl, at='float', ln='Master_Fist', k=True)
 mfist_attr = '{}.Master_Fist'.format(wrist_ctrl)
 
 for finger_jnt in list(filter(lambda x: '_JNT' in x, cmds.listRelatives(wrist_jnt))):
-    finger_joints = [finger_jnt, finger_jnt.replace('0', '1'), finger_jnt.replace('0', '2')]
-    finger_info = unpack_finger(finger_jnt)
+    finger_len = len(cmds.listRelatives(finger_jnt, ad=True))
+    finger_joints = list(map(lambda x: finger_jnt.replace('0', str(x)), range(0, finger_len)))
+    finger_info = unpack_finger(finger_jnt, finger_len)
     add_separator_attr(wrist_ctrl, finger_info[0].upper())
 
     f_plus = '{}_{}_MasterFist_PlusMinusAvg'.format(finger_info[2], finger_info[0])
@@ -85,7 +95,7 @@ for finger_jnt in list(filter(lambda x: '_JNT' in x, cmds.listRelatives(wrist_jn
         f_grp = f_ctrl + '_GRP'
 
         # ==== CREATE CONTROL =====================================================================
-        create_control(f_jnt, scale=.2)
+        create_control(f_jnt, scale=FINGER_CTRL_SCALE)
 
         # ==== SET PARENTING ======================================================================
         if i != 0:
@@ -95,7 +105,7 @@ for finger_jnt in list(filter(lambda x: '_JNT' in x, cmds.listRelatives(wrist_jn
 
         # ==== CONNECT ROTATION TO JOINT ==========================================================
         connect_rotation(f_ctrl, f_jnt)
-        fing_def = unpack_finger(f_jnt)
+        fing_def = unpack_finger(f_jnt, finger_len)
         cmds.addAttr(wrist_ctrl, at='float', ln='{}_{}'.format(fing_def[0], fing_def[1]), k=True)
         cmds.connectAttr('{}.{}_{}'.format(wrist_ctrl, fing_def[0], fing_def[1]), '{}.input3D[1].input3D{}'.format(f_plus, PLUS_SEQ[i]))
         cmds.connectAttr('{}.output3D.output3D{}'.format(f_plus, PLUS_SEQ[i]), '{}.rotate{}'.format(f_ctrl, FINGER_MAIN_AXIS))
