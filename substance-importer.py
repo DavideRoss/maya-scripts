@@ -29,7 +29,7 @@ class TextureInfo:
 # ===== CALLBACKS =================================================================================
 
 def select_input_dir(*args):
-    dir = cmds.fileDialog2(fm=2)
+    dir = cmds.fileDialog2(fm=2, ds=2, okc='Select')
     if dir is None:
         return
 
@@ -48,6 +48,7 @@ def change_texture_map(tex):
     hasHeight = sum(1 for x in textures if x.name == tex and x.type == 'Height') > 0
 
     canCreate = True
+    cmds.textField('matNameCtrl', edit=True, text='{}_MAT'.format(baseName))
     
     if hasBaseColor:
         maps = sum(1 for x in textures if x.name == tex and x.type == 'BaseColor')
@@ -84,9 +85,7 @@ def change_texture_map(tex):
         cmds.text(heightTextCtrl, edit=True, bgc=RED_COLOR, label='Height map not found!')
         canCreate = False
 
-    cmds.button('createMatButtonCtrl', e=True, en=canCreate)
-    cmds.button('createAnywayButtonCtrl', e=True, en=not canCreate)
-    
+    cmds.button('createMatButtonCtrl', e=True, en=canCreate)  
 
 def get_textures_info(*args):
     global textures
@@ -115,13 +114,13 @@ def get_textures_info(*args):
 def create_material(*args):
     baseDir = cmds.textField('dirTextCtrl', q=True, text=True)
     baseName = cmds.optionMenu(textureOptionCtrl, q=True, value=True)
-    camelCaseTitle = baseName.title().replace('_', '')
+    matName = cmds.textField('matNameCtrl', q=True, text=True)
 
-    baseColorFile = cmds.createNode('file', n='baseColorFile')
-    heightFile = cmds.createNode('file', n='heightFile')
-    normalFile = cmds.createNode('file', n='normalFile')
-    roughnessFile = cmds.createNode('file', n='roughnessFile')
-    metalnessFile = cmds.createNode('file', n='metalnessFile')
+    baseColorFile = cmds.shadingNode('file', n='baseColorFile', asTexture=True)
+    heightFile = cmds.shadingNode('file', n='heightFile', asTexture=True)
+    normalFile = cmds.shadingNode('file', n='normalFile', asTexture=True)
+    roughnessFile = cmds.shadingNode('file', n='roughnessFile', asTexture=True)
+    metalnessFile = cmds.shadingNode('file', n='metalnessFile', asTexture=True)
 
     cmds.setAttr(baseColorFile + '.fileTextureName', '{}/{}_BaseColor.1001.png'.format(baseDir, baseName), type='string')
     cmds.setAttr(heightFile + '.fileTextureName', '{}/{}_Height.1001.png'.format(baseDir, baseName), type='string')
@@ -129,10 +128,10 @@ def create_material(*args):
     cmds.setAttr(roughnessFile + '.fileTextureName', '{}/{}_Roughness.1001.png'.format(baseDir, baseName), type='string')
     cmds.setAttr(metalnessFile + '.fileTextureName', '{}/{}_Metalness.1001.png'.format(baseDir, baseName), type='string')
     
-    normalBump = cmds.createNode('bump2d', n='normalBump')
-    heightBump = cmds.createNode('bump2d', n='heightBump')
+    normalBump = cmds.shadingNode('bump2d', n='normalBump', asUtility=True)
+    heightBump = cmds.shadingNode('bump2d', n='heightBump', asUtility=True)
     
-    matNode = cmds.createNode('aiStandardSurface', n=camelCaseTitle + '_MAT')
+    matNode = cmds.shadingNode('aiStandardSurface', n=matName, asShader=True)
     
     cmds.connectAttr(baseColorFile + '.outColor', matNode + '.baseColor')
     cmds.connectAttr(roughnessFile + '.outAlpha', matNode + '.specularRoughness')
@@ -155,6 +154,7 @@ def create_material(*args):
     
     cmds.setAttr(normalBump + '.bumpInterp', 1)
     cmds.setAttr(normalBump + '.aiFlipR', True)
+    cmds.setAttr(normalBump + '.aiFlipG', False)
     
     cmds.connectAttr(heightFile + '.outAlpha', heightBump + '.bumpValue')
     cmds.connectAttr(normalFile + '.outAlpha', normalBump + '.bumpValue')
@@ -166,7 +166,7 @@ def create_material(*args):
 if cmds.window(WINDOW_ID, exists=True):
     cmds.deleteUI(win)
 
-win = cmds.window(title='Substance Painter importer', widthHeight=(350, 305), mxb=False, mnb=False, s=False)
+win = cmds.window(title='Substance Painter Importer', widthHeight=(350, 305), mxb=False, mnb=False, s=False)
 form = cmds.formLayout(numberOfDivisions=100)
 
 colLayout = cmds.columnLayout(adjustableColumn=True, rowSpacing=10)
@@ -186,7 +186,7 @@ dirSelectorLayout = cmds.rowLayout(
 dirLabelCtrl = cmds.text(label='Directory')
 
 if DEBUG:
-    dirTextCtrl = cmds.textField('dirTextCtrl', text='/Users/master/Documents/maya/projects/TestProj/sourceimages') # WARNING: DEBUG!
+    dirTextCtrl = cmds.textField('dirTextCtrl', text='/Users/master/Documents/maya/projects/__Shader_Ball_TEST/sourceimages/test_mat') # WARNING: DEBUG!
 else:
     dirTextCtrl = cmds.textField('dirTextCtrl')
 
@@ -206,8 +206,22 @@ normalTextCtrl = cmds.text(label="Normal", bgc=[0, 0, 0], ebg=True, height=20)
 heightTextCtrl = cmds.text(label="Height", bgc=[0, 0, 0], ebg=True, height=20)
 cmds.setParent('..')
 
-cmds.button('createMatButtonCtrl', label='Create full material', command=create_material, enable=False)
-cmds.button('createAnywayButtonCtrl', label='Create anyway (may causes errors!)', command=create_material, en=False)
+dirSelectorLayout = cmds.rowLayout(
+    numberOfColumns=2,
+    columnWidth2=(100, 230),
+    adjustableColumn=1,
+    columnAlign=(1, 'right'),
+    columnAttach=[
+        (1, 'both', 0),
+        (2, 'both', 0)
+    ]
+)
+
+matNameLabelCtrl = cmds.text(label='Mat. name')
+matNameCtrl = cmds.textField('matNameCtrl')
+cmds.setParent('..')
+
+cmds.button('createMatButtonCtrl', label='Create material', command=create_material, enable=False)
 
 cmds.formLayout(form, edit=True, attachForm=[
     (colLayout, 'top', 5),

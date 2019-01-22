@@ -2,10 +2,19 @@
 Collection of scripts written by myself for living Autodesk Maya hell better.
 
 ## substance-importer
+
+## Description
+Create a new Arnold material from a folder with all exported maps from Substance Painter.
+
 ### Changelog
 - **Version 1.0.1**
   - Added version number, starting from 1.0.1
   - Fixed attribute "Flip G" on normal bump node
+- **Version 1.0.2**
+    - Fixed missing shader in HyperShade panel
+    - Fixed wrong flipping G on normal bump node
+    - Added control to change material name before creating
+    - Removed "create anyway" button, will be replaced with a popup message on a latter version
 
 ---
 
