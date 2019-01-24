@@ -15,6 +15,11 @@ Create a new Arnold material from a folder with all exported maps from Substance
     - Fixed wrong flipping G on normal bump node
     - Added control to change material name before creating
     - Removed "create anyway" button, will be replaced with a popup message on a latter version
+- **Version 1.0.3**
+    - Added support for non-tiled texture maps
+    - Filtered maps for `*.png` extension
+    - Refactored `create_material` method for non-tiled support
+    - Height bump node now has default depth to zero
 
 ---
 
